@@ -120,7 +120,8 @@ router.get("/", async (req, res) => {
                     <i class="fas fa-angle-up"></i>
                 </a>
                 ${logoutModal()}
-                
+
+                <!-- Modal para Crear -->
                 <div class="modal fade" id="modalCrear">
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
@@ -141,6 +142,7 @@ router.get("/", async (req, res) => {
                     </div>
                 </div>
 
+                <!-- Modal para Editar -->
                 <div class="modal fade" id="modalEditar">
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
@@ -162,6 +164,7 @@ router.get("/", async (req, res) => {
                     </div>
                 </div>
 
+                <!-- Modal para Eliminar -->
                 <div class="modal fade" id="modalEliminar">
                     <div class="modal-dialog">
                         <div class="modal-content p-3">
