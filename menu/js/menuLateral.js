@@ -19,7 +19,7 @@ function menuLateral(rol) {
 <hr class="sidebar-divider my-0">
 
 <li class="nav-item active">
-    <a class="nav-link" href="../menu/menu">
+    <a class="nav-link" href="/menu">
         <i class="fas fa-home"></i>
         <span>Inicio</span>
     </a>

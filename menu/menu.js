@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const connection = require('../config/conexion');
+const connection = require('../config/conexion.js');
 
 const menuLateral = require('./js/menuLateral');
 const barraSuperior = require('./js/barraSuperior');

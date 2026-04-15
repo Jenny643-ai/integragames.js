@@ -48,7 +48,7 @@ router.get('/perfil', async (req, res) => {
             : '/img/responsables/sinFoto.jpg';
 
         const encabezadoHTML = encabezado();
-        const menuLateralHTML = menuLateral(req);
+        const menuLateralHTML = menuLateral(rol);
         const barraSuperiorHTML = await barraSuperior(req);
 
         res.render('perfil', {
