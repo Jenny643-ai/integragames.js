@@ -5,12 +5,15 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 
+//  IMPORTANTE (ESTO FALTABA)
+const barraSuperior = require('../menu/js/barraSuperior');
+
 /* =========================
    CONFIGURAR MULTER
 ========================= */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'public/img/eventos'); // IMPORTANTE: carpeta pública
+        cb(null, 'img/eventos');
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + "_" + file.originalname);
@@ -22,11 +25,14 @@ const upload = multer({ storage });
 /* =========================
    RUTA PRINCIPAL
 ========================= */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
 
     if (!req.session.usuario) {
-        return res.redirect('/login');
+        return res.redirect('/RegistroAdmin/login.html');
     }
+
+    // 🔥 BARRA SUPERIOR
+    const barra = await barraSuperior(req);
 
     const sql = "SELECT * FROM evento ORDER BY fecha DESC";
 
@@ -43,7 +49,16 @@ router.get('/', (req, res) => {
 
             result.forEach(row => {
 
-                let imagenPath = path.join(__dirname, '../public/img/eventos/', row.imagen || '');
+                let fechaObj = new Date(row.fecha);
+
+                let fechaFormateada = fechaObj.toLocaleDateString('es-MX', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+                let imagenPath = path.join(__dirname, '../img/eventos/', row.imagen || '');
+
                 let imagen = (row.imagen && fs.existsSync(imagenPath))
                     ? '/img/eventos/' + row.imagen
                     : '/img/default.png';
@@ -52,28 +67,27 @@ router.get('/', (req, res) => {
                 <tr>
                     <td><img src="${imagen}" class="img-evento"></td>
                     <td>${row.nombre_evento}</td>
-                    <td>${row.fecha}</td>
+                    <td>${fechaFormateada}</td>
                     <td>${row.lugar}</td>
-                    <td>${row.observaciones}</td>
                     <td>
-                        <button class="btn btn-warning btn-sm"
+                        <button class="btn btn-primary btn-sm"
                             onclick="editarEvento(
                             '${row.id_evento}',
                             '${row.nombre_evento}',
                             '${row.fecha}',
                             '${row.lugar}',
                             '${row.observaciones}'
-                        )">✏️</button>
+                        )">Editar</button>
 
                         <button class="btn btn-danger btn-sm"
-                            onclick="eliminarEvento('${row.id_evento}')">🗑️</button>
+                            onclick="eliminarEvento('${row.id_evento}')">Eliminar</button>
                     </td>
                 </tr>
                 `;
             });
 
         } else {
-            eventosHTML = `<tr><td colspan="6" class="text-center">No hay eventos</td></tr>`;
+            eventosHTML = `<tr><td colspan="5" class="text-center">No hay eventos</td></tr>`;
         }
 
         res.send(`
@@ -84,6 +98,7 @@ router.get('/', (req, res) => {
 <title>Eventos</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
 body { background:#f4f6f9; }
@@ -96,61 +111,35 @@ body { background:#f4f6f9; }
 }
 
 .img-evento {
-    width:90px;
-    height:90px;
+    width:60px;
+    height:60px;
     object-fit:cover;
     border-radius:10px;
 }
-
-td { vertical-align:middle; }
 </style>
 </head>
 
 <body>
 
+${barra}
+
 <div class="container mt-4">
 <div class="container-box">
 
-<h2 class="mb-4">📅 Eventos</h2>
+<div class="d-flex justify-content-between mb-3">
+    <h3>Gestión de Eventos</h3>
+    <button class="btn btn-success" onclick="abrirModal()">+ Nuevo</button>
+</div>
 
-<!-- CREAR -->
-<form action="/eventos/crear" method="POST" enctype="multipart/form-data" class="row g-2 mb-3">
-    <div class="col-md-2">
-        <input type="text" name="nombre_evento" class="form-control" placeholder="Nombre" required>
-    </div>
-
-    <div class="col-md-2">
-        <input type="date" name="fecha" class="form-control" required>
-    </div>
-
-    <div class="col-md-2">
-        <input type="text" name="lugar" class="form-control" placeholder="Lugar" required>
-    </div>
-
-    <div class="col-md-3">
-        <input type="text" name="observaciones" class="form-control" placeholder="Observaciones">
-    </div>
-
-    <div class="col-md-2">
-        <input type="file" name="imagen" class="form-control">
-    </div>
-
-    <div class="col-md-1 d-grid">
-        <button class="btn btn-success">Guardar</button>
-    </div>
-</form>
-
-<!-- TABLA -->
 <div class="table-responsive">
 <table class="table table-hover table-bordered">
 
-<thead class="table-dark">
+<thead class="table-light">
 <tr>
     <th>Imagen</th>
     <th>Nombre</th>
     <th>Fecha</th>
     <th>Lugar</th>
-    <th>Observaciones</th>
     <th>Acciones</th>
 </tr>
 </thead>
@@ -165,58 +154,72 @@ ${eventosHTML}
 </div>
 </div>
 
-<!-- FORM ELIMINAR -->
+<!-- MODAL -->
+<div class="modal fade" id="modalEvento">
+<div class="modal-dialog">
+<div class="modal-content">
+
+<form id="formEvento" action="/eventos/crear" method="POST" enctype="multipart/form-data">
+
+<div class="modal-header">
+    <h5 class="modal-title">Evento</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<input type="hidden" name="id_evento" id="id_evento">
+
+<input type="text" name="nombre_evento" id="nombre" class="form-control mb-2" placeholder="Nombre" required>
+
+<input type="date" name="fecha" id="fecha" class="form-control mb-2" required>
+
+<input type="text" name="lugar" id="lugar" class="form-control mb-2" placeholder="Lugar" required>
+
+<textarea name="observaciones" id="observaciones" class="form-control mb-2" placeholder="Observaciones"></textarea>
+
+<input type="file" name="imagen" class="form-control">
+
+</div>
+
+<div class="modal-footer">
+    <button class="btn btn-primary w-100">Guardar</button>
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
 <form id="formEliminar" action="/eventos/eliminar" method="POST" style="display:none;">
 <input type="hidden" name="id_evento" id="deleteIdEvento">
 </form>
 
-<!-- FORM EDITAR -->
-<div class="container mt-3">
-<form action="/eventos/editar" method="POST" enctype="multipart/form-data" class="row g-2">
-
-<input type="hidden" name="id_evento" id="editIdEvento">
-
-<div class="col-md-2">
-<input type="text" name="nombre_evento" id="editNombre" class="form-control">
-</div>
-
-<div class="col-md-2">
-<input type="date" name="fecha" id="editFecha" class="form-control">
-</div>
-
-<div class="col-md-2">
-<input type="text" name="lugar" id="editLugar" class="form-control">
-</div>
-
-<div class="col-md-3">
-<input type="text" name="observaciones" id="editObservaciones" class="form-control">
-</div>
-
-<div class="col-md-2">
-<input type="file" name="imagen" class="form-control">
-</div>
-
-<div class="col-md-1 d-grid">
-<button class="btn btn-primary">Actualizar</button>
-</div>
-
-</form>
-</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-function eliminarEvento(id){
-    document.getElementById('deleteIdEvento').value=id;
-    document.getElementById('formEliminar').submit();
+let modal = new bootstrap.Modal(document.getElementById('modalEvento'));
+
+function abrirModal(){
+    document.getElementById('formEvento').action = '/eventos/crear';
+    document.getElementById('formEvento').reset();
+    modal.show();
 }
 
 function editarEvento(id,nombre,fecha,lugar,obs){
-    document.getElementById('editIdEvento').value=id;
-    document.getElementById('editNombre').value=nombre;
-    document.getElementById('editFecha').value=fecha;
-    document.getElementById('editLugar').value=lugar;
-    document.getElementById('editObservaciones').value=obs;
+    document.getElementById('formEvento').action = '/eventos/editar';
+    document.getElementById('id_evento').value = id;
+    document.getElementById('nombre').value = nombre;
+    document.getElementById('fecha').value = fecha;
+    document.getElementById('lugar').value = lugar;
+    document.getElementById('observaciones').value = obs;
+    modal.show();
+}
 
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+function eliminarEvento(id){
+    document.getElementById('deleteIdEvento').value = id;
+    document.getElementById('formEliminar').submit();
 }
 </script>
 
