@@ -86,7 +86,8 @@ document.getElementById('formRegistro').addEventListener('submit', async (e) => 
 
         alert("Registro exitoso");
 
-        window.location.href = "/menu"; 
+        // ✅ AHORA entra al sistema como alumno/promotor
+        window.location.href = "/menu";
 
     } catch (error) {
         console.error("Error:", error);

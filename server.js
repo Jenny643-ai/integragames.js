@@ -234,12 +234,25 @@ app.post('/guardar_alumno', (req, res) => {
     connection.query(sql, [nombre, edad, id_evento, id_escuela], (err) => {
 
         if (err) {
-            console.error("Error insertar:", err);
+            console.error(err);
             return res.status(500).json({ error: "Error al guardar" });
         }
 
-        res.json({
-            mensaje: "Alumno registrado correctamente"
+        // 🔥 AQUÍ VA EXACTAMENTE
+        req.session.regenerate((err) => {
+
+            if (err) {
+                return res.status(500).json({ error: "Error de sesión" });
+            }
+
+            req.session.usuario = nombre;
+            req.session.rol = "alumno";
+
+            // RESPUESTA
+            res.json({
+                mensaje: "Alumno registrado correctamente"
+            });
+
         });
 
     });

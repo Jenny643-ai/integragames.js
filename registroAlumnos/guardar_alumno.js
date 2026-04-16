@@ -11,7 +11,7 @@ document.getElementById('formRegistro').addEventListener('submit', async (e) => 
 
     try {
 
-        const resp = await fetch('http://localhost:3000/api/participantes', {
+        const resp = await fetch('/guardar_alumno', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -26,15 +26,10 @@ document.getElementById('formRegistro').addEventListener('submit', async (e) => 
             return;
         }
 
-        // 💾 Guardar sesión (como PHP session)
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('usuario', data.usuario);
-        localStorage.setItem('rol', data.rol);
-
         alert('Registro exitoso');
 
-        // 🔁 Redirigir
-        window.location.href = 'menu.html';
+        // ✅ usar sesión del servidor
+        window.location.href = "/menu";
 
     } catch (error) {
         alert('Error de conexión');
