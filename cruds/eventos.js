@@ -2,15 +2,15 @@ const express = require('express');
 const router = express.Router();
 const connection = require('../config/conexion');
 const multer = require('multer');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
 /* =========================
    CONFIGURAR MULTER
 ========================= */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, '../img/eventos/');
+        cb(null, 'public/img/eventos'); // IMPORTANTE: carpeta pública
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + "_" + file.originalname);
@@ -25,10 +25,8 @@ const upload = multer({ storage });
 router.get('/', (req, res) => {
 
     if (!req.session.usuario) {
-        return res.redirect('../RegistroAdmin/login');
+        return res.redirect('/login');
     }
-
-    const rol = req.session.rol;
 
     const sql = "SELECT * FROM evento ORDER BY fecha DESC";
 
@@ -45,95 +43,126 @@ router.get('/', (req, res) => {
 
             result.forEach(row => {
 
-                let imagen = (row.imagen && fs.existsSync("../img/eventos/" + row.imagen))
-                    ? "../img/eventos/" + row.imagen
-                    : "../img/default.png";
+                let imagenPath = path.join(__dirname, '../public/img/eventos/', row.imagen || '');
+                let imagen = (row.imagen && fs.existsSync(imagenPath))
+                    ? '/img/eventos/' + row.imagen
+                    : '/img/default.png';
 
                 eventosHTML += `
-                <div class="col-12 mb-3">
-                    <div class="card shadow-sm p-3 d-flex flex-row justify-content-between align-items-center" style="border-radius:15px;">
+                <tr>
+                    <td><img src="${imagen}" class="img-evento"></td>
+                    <td>${row.nombre_evento}</td>
+                    <td>${row.fecha}</td>
+                    <td>${row.lugar}</td>
+                    <td>${row.observaciones}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm"
+                            onclick="editarEvento(
+                            '${row.id_evento}',
+                            '${row.nombre_evento}',
+                            '${row.fecha}',
+                            '${row.lugar}',
+                            '${row.observaciones}'
+                        )">✏️</button>
 
-                        <div class="d-flex align-items-center">
-                            <img src="${imagen}" class="img-evento">
-
-                            <div>
-                                <h6 class="mb-1">${row.nombre_evento}</h6>
-
-                                <small class="text-muted">
-                                    Fecha: ${row.fecha}<br>
-                                    Lugar: ${row.lugar}<br>
-                                    Observaciones: ${row.observaciones}
-                                </small>
-                            </div>
-                        </div>
-
-                        <div>
-                            <button class="btn btn-info btn-sm"
-                                onclick="editarEvento(
-                                '${row.id_evento}',
-                                '${row.nombre_evento}',
-                                '${row.fecha}',
-                                '${row.lugar}',
-                                '${row.observaciones}'
-                            )">
-                                ✏️
-                            </button>
-
-                            <button class="btn btn-danger btn-sm"
-                                onclick="eliminarEvento('${row.id_evento}')">
-                                🗑️
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
+                        <button class="btn btn-danger btn-sm"
+                            onclick="eliminarEvento('${row.id_evento}')">🗑️</button>
+                    </td>
+                </tr>
                 `;
             });
 
         } else {
-            eventosHTML = "<p class='text-center'>No hay eventos registrados</p>";
+            eventosHTML = `<tr><td colspan="6" class="text-center">No hay eventos</td></tr>`;
         }
 
         res.send(`
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="icon" href="../img/logo.png">
-<link href="../css/styles.css" rel="stylesheet">
+<meta charset="UTF-8">
+<title>Eventos</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-.img-evento {
-    width: 220px;
-    height: 270px;
-    object-fit: cover;
-    border-radius: 15px;
-    margin-right: 15px;
+body { background:#f4f6f9; }
+
+.container-box {
+    background:white;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
+
+.img-evento {
+    width:90px;
+    height:90px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+td { vertical-align:middle; }
 </style>
 </head>
 
-<body id="page-top">
+<body>
 
-<div class="container-fluid">
+<div class="container mt-4">
+<div class="container-box">
 
-<h1>Eventos</h1>
+<h2 class="mb-4">📅 Eventos</h2>
 
 <!-- CREAR -->
-<form action="/eventos/crear" method="POST" enctype="multipart/form-data">
-<input type="text" name="nombre_evento" placeholder="Nombre" required>
-<input type="date" name="fecha" required>
-<input type="text" name="lugar" placeholder="Lugar" required>
-<textarea name="observaciones" placeholder="Observaciones"></textarea>
-<input type="file" name="imagen">
-<button>Guardar</button>
+<form action="/eventos/crear" method="POST" enctype="multipart/form-data" class="row g-2 mb-3">
+    <div class="col-md-2">
+        <input type="text" name="nombre_evento" class="form-control" placeholder="Nombre" required>
+    </div>
+
+    <div class="col-md-2">
+        <input type="date" name="fecha" class="form-control" required>
+    </div>
+
+    <div class="col-md-2">
+        <input type="text" name="lugar" class="form-control" placeholder="Lugar" required>
+    </div>
+
+    <div class="col-md-3">
+        <input type="text" name="observaciones" class="form-control" placeholder="Observaciones">
+    </div>
+
+    <div class="col-md-2">
+        <input type="file" name="imagen" class="form-control">
+    </div>
+
+    <div class="col-md-1 d-grid">
+        <button class="btn btn-success">Guardar</button>
+    </div>
 </form>
 
-<hr>
+<!-- TABLA -->
+<div class="table-responsive">
+<table class="table table-hover table-bordered">
 
-<div class="row">
+<thead class="table-dark">
+<tr>
+    <th>Imagen</th>
+    <th>Nombre</th>
+    <th>Fecha</th>
+    <th>Lugar</th>
+    <th>Observaciones</th>
+    <th>Acciones</th>
+</tr>
+</thead>
+
+<tbody>
 ${eventosHTML}
+</tbody>
+
+</table>
 </div>
 
+</div>
 </div>
 
 <!-- FORM ELIMINAR -->
@@ -142,28 +171,52 @@ ${eventosHTML}
 </form>
 
 <!-- FORM EDITAR -->
-<form id="formEditar" action="/eventos/editar" method="POST" enctype="multipart/form-data">
+<div class="container mt-3">
+<form action="/eventos/editar" method="POST" enctype="multipart/form-data" class="row g-2">
+
 <input type="hidden" name="id_evento" id="editIdEvento">
-<input type="text" name="nombre_evento" id="editNombre" placeholder="Nombre">
-<input type="date" name="fecha" id="editFecha">
-<input type="text" name="lugar" id="editLugar" placeholder="Lugar">
-<textarea name="observaciones" id="editObservaciones"></textarea>
-<input type="file" name="imagen">
-<button type="submit">Guardar cambios</button>
+
+<div class="col-md-2">
+<input type="text" name="nombre_evento" id="editNombre" class="form-control">
+</div>
+
+<div class="col-md-2">
+<input type="date" name="fecha" id="editFecha" class="form-control">
+</div>
+
+<div class="col-md-2">
+<input type="text" name="lugar" id="editLugar" class="form-control">
+</div>
+
+<div class="col-md-3">
+<input type="text" name="observaciones" id="editObservaciones" class="form-control">
+</div>
+
+<div class="col-md-2">
+<input type="file" name="imagen" class="form-control">
+</div>
+
+<div class="col-md-1 d-grid">
+<button class="btn btn-primary">Actualizar</button>
+</div>
+
 </form>
+</div>
 
 <script>
-function eliminarEvento(id) {
-    document.getElementById('deleteIdEvento').value = id;
+function eliminarEvento(id){
+    document.getElementById('deleteIdEvento').value=id;
     document.getElementById('formEliminar').submit();
 }
 
-function editarEvento(id, nombre, fecha, lugar, observaciones) {
-    document.getElementById('editIdEvento').value = id;
-    document.getElementById('editNombre').value = nombre;
-    document.getElementById('editFecha').value = fecha;
-    document.getElementById('editLugar').value = lugar;
-    document.getElementById('editObservaciones').value = observaciones;
+function editarEvento(id,nombre,fecha,lugar,obs){
+    document.getElementById('editIdEvento').value=id;
+    document.getElementById('editNombre').value=nombre;
+    document.getElementById('editFecha').value=fecha;
+    document.getElementById('editLugar').value=lugar;
+    document.getElementById('editObservaciones').value=obs;
+
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 </script>
 
@@ -172,26 +225,20 @@ function editarEvento(id, nombre, fecha, lugar, observaciones) {
         `);
 
     });
-
 });
 
 /* ================= CREAR ================= */
 router.post('/crear', upload.single('imagen'), (req, res) => {
 
     const { nombre_evento, fecha, lugar, observaciones } = req.body;
-
-    let imagenNombre = req.file ? req.file.filename : "";
+    let imagen = req.file ? req.file.filename : "";
 
     const sql = `
-        INSERT INTO evento (nombre_evento, fecha, lugar, observaciones, imagen)
-        VALUES ('${nombre_evento}','${fecha}','${lugar}','${observaciones}','${imagenNombre}')
-    `;
+    INSERT INTO evento (nombre_evento, fecha, lugar, observaciones, imagen)
+    VALUES (?,?,?,?,?)`;
 
-    connection.query(sql, (err) => {
-        if (err) {
-            console.error(err);
-            return res.send("Error al crear");
-        }
+    connection.query(sql, [nombre_evento, fecha, lugar, observaciones, imagen], err => {
+        if (err) return res.send("Error");
         res.redirect('/eventos');
     });
 });
@@ -199,13 +246,10 @@ router.post('/crear', upload.single('imagen'), (req, res) => {
 /* ================= ELIMINAR ================= */
 router.post('/eliminar', (req, res) => {
 
-    const id = parseInt(req.body.id_evento);
+    const id = req.body.id_evento;
 
-    connection.query(`DELETE FROM evento WHERE id_evento='${id}'`, (err) => {
-        if (err) {
-            console.error(err);
-            return res.send("Error al eliminar");
-        }
+    connection.query("DELETE FROM evento WHERE id_evento=?", [id], err => {
+        if (err) return res.send("Error");
         res.redirect('/eventos');
     });
 });
@@ -213,29 +257,24 @@ router.post('/eliminar', (req, res) => {
 /* ================= EDITAR ================= */
 router.post('/editar', upload.single('imagen'), (req, res) => {
 
-    const id = parseInt(req.body.id_evento);
-
-    const { nombre_evento, fecha, lugar, observaciones } = req.body;
+    const { id_evento, nombre_evento, fecha, lugar, observaciones } = req.body;
 
     let sql = `
-        UPDATE evento SET 
-        nombre_evento='${nombre_evento}',
-        fecha='${fecha}',
-        lugar='${lugar}',
-        observaciones='${observaciones}'
-    `;
+    UPDATE evento SET 
+    nombre_evento=?, fecha=?, lugar=?, observaciones=?`;
+
+    let params = [nombre_evento, fecha, lugar, observaciones];
 
     if (req.file) {
-        sql += `, imagen='${req.file.filename}'`;
+        sql += ", imagen=?";
+        params.push(req.file.filename);
     }
 
-    sql += ` WHERE id_evento='${id}'`;
+    sql += " WHERE id_evento=?";
+    params.push(id_evento);
 
-    connection.query(sql, (err) => {
-        if (err) {
-            console.error(err);
-            return res.send("Error al editar");
-        }
+    connection.query(sql, params, err => {
+        if (err) return res.send("Error");
         res.redirect('/eventos');
     });
 });

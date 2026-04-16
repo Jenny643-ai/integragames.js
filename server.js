@@ -101,8 +101,17 @@ function verificarSesion(req, res, next) {
 const menuRouter = require('./menu/menu');
 app.use('/menu', verificarSesion, menuRouter);
 
+/* =========================
+   ⚠️ AQUÍ ESTABA EL ERROR
+   CAMBIO REAL ↓↓↓↓↓↓↓↓↓↓↓↓↓
+========================= */
+
+// ❌ ANTES (MAL)
+// app.use('/', verificarSesion, perfilRouter);
+
+// ✅ AHORA (BIEN)
 const perfilRouter = require('./menu/perfil');
-app.use('/', verificarSesion, perfilRouter);
+app.use('/perfil', verificarSesion, perfilRouter);
 
 
 /* =========================
@@ -121,7 +130,7 @@ const personalRouter = require('./cruds/personal');
 app.use('/personal', verificarSesion, personalRouter);
 
 /* =========================
-   API EVENTOS
+   API EVENTOS (NO TOCAR)
 ========================= */
 app.get('/api/eventos', (req, res) => {
 
@@ -147,7 +156,7 @@ app.get('/escuelas', verificarSesion, (req, res) => {
 });
 
 /* =========================
-   ESCUELAS
+   ESCUELAS (NO TOCAR)
 ========================= */
 app.get('/api/escuelas', (req, res) => {
 

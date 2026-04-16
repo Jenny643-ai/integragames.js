@@ -2,18 +2,20 @@ const API_EVENTOS = '/api/eventos';
 const API_ESCUELAS = '/api/escuelas';
 const API_REGISTRO = '/guardar_alumno';
 
-// cargar datos al iniciar
 window.onload = () => {
     cargarEscuelas();
     cargarEventos();
 };
 
-// =====================
-// CARGAR ESCUELAS
-// =====================
+/* =====================
+   ESCUELAS
+===================== */
 async function cargarEscuelas() {
     try {
         const res = await fetch(API_ESCUELAS);
+
+        if (!res.ok) throw new Error("No autorizado");
+
         const data = await res.json();
 
         const select = document.getElementById('id_escuela');
@@ -22,22 +24,26 @@ async function cargarEscuelas() {
         data.forEach(e => {
             select.innerHTML += `
                 <option value="${e.id_escuela}">
-                    ${e.nombre_escuela}  
+                    ${e.nombre_escuela}
                 </option>
             `;
         });
 
     } catch (error) {
         console.error("Error cargando escuelas:", error);
+        alert("Error cargando escuelas");
     }
 }
 
-// =====================
-// CARGAR EVENTOS
-// =====================
+/* =====================
+   EVENTOS
+===================== */
 async function cargarEventos() {
     try {
         const res = await fetch(API_EVENTOS);
+
+        if (!res.ok) throw new Error("No autorizado");
+
         const data = await res.json();
 
         const select = document.getElementById('id_evento');
@@ -53,12 +59,13 @@ async function cargarEventos() {
 
     } catch (error) {
         console.error("Error cargando eventos:", error);
+        alert("Error cargando eventos");
     }
 }
 
-// =====================
-// REGISTRAR
-// =====================
+/* =====================
+   REGISTRAR
+===================== */
 document.getElementById('formRegistro').addEventListener('submit', async (e) => {
 
     e.preventDefault();
@@ -85,8 +92,7 @@ document.getElementById('formRegistro').addEventListener('submit', async (e) => 
         }
 
         alert("Registro exitoso");
-
-        window.location.href = "/menu"; 
+        window.location.href = "/menu";
 
     } catch (error) {
         console.error("Error:", error);
