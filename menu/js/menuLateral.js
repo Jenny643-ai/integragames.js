@@ -3,12 +3,20 @@ function menuLateral(rol) {
     const esAdmin = (rol === "administrador");
     const esProgramador = (rol === "programador");
     const esPromotor = (rol === "promotor");
+    const esAlumno = (rol === "alumno");
+
+    // Permisos (solo para no alumnos)
+    const verPersonal = esAdmin || esProgramador || esPromotor;
+    const verEscuelas = esAdmin || esProgramador || esPromotor;
+    const verHistorial = esAdmin || esProgramador || esPromotor;
+    const verEventos = esAdmin || esProgramador || esPromotor;
 
     return `
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
+<!-- LOGO -->
 <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/menu">
     <div class="sidebar-brand-icon">
         <i class="fas fa-gamepad"></i>
@@ -18,6 +26,7 @@ function menuLateral(rol) {
 
 <hr class="sidebar-divider my-0">
 
+<!-- INICIO (TODOS) -->
 <li class="nav-item active">
     <a class="nav-link" href="/menu">
         <i class="fas fa-home"></i>
@@ -25,7 +34,8 @@ function menuLateral(rol) {
     </a>
 </li>
 
-${(esAdmin || esProgramador || esPromotor) ? `
+<!-- ADMINISTRACIÓN (NO ALUMNOS) -->
+${!esAlumno ? `
 
 <hr class="sidebar-divider">
 
@@ -33,30 +43,34 @@ ${(esAdmin || esProgramador || esPromotor) ? `
 Administración
 </div>
 
-${esAdmin ? `
+${verPersonal ? `
 <li class="nav-item">
-    <a class="nav-link" href="../personal">
+    <a class="nav-link" href="/personal">
         <i class="fas fa-user"></i>
         <span>Personal</span>
     </a>
 </li>
 ` : ''}
 
+${verEventos ? `
 <li class="nav-item">
-    <a class="nav-link" href="../eventos">
+    <a class="nav-link" href="/eventos">
         <i class="fas fa-calendar-alt"></i>
         <span>Eventos</span>
     </a>
 </li>
+` : ''}
 
-${(esAdmin || esProgramador) ? `
+${verEscuelas ? `
 <li class="nav-item">
-    <a class="nav-link" href="../escuelas">
+    <a class="nav-link" href="/escuelas">
         <i class="fas fa-school"></i>
         <span>Escuelas</span>
     </a>
 </li>
+` : ''}
 
+${verHistorial ? `
 <li class="nav-item">
     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsuarios">
         <i class="fas fa-users"></i>
@@ -67,11 +81,11 @@ ${(esAdmin || esProgramador) ? `
         <div class="bg-white py-2 collapse-inner rounded">
             <h6 class="collapse-header">Historial:</h6>
 
-            <a class="collapse-item" href="../encargadoEvento">
+            <a class="collapse-item" href="/encargadoEvento">
                 <i class="fas fa-user-tie"></i> Eventos
             </a>
 
-            <a class="collapse-item" href="../lista">
+            <a class="collapse-item" href="/lista">
                 <i class="fas fa-users"></i> Participantes
             </a>
         </div>
@@ -108,14 +122,14 @@ Contacto
 </li>
 
 <li class="nav-item">
-    <a class="nav-link" href="https://www.instagram.com/utmmorelia?igsh=NzBsNHVlYTRyeTZk">
+    <a class="nav-link" href="https://www.instagram.com/utmmorelia">
         <i class="fab fa-instagram"></i>
         <span>Instagram</span>
     </a>
 </li>
 
 <li class="nav-item">
-    <a class="nav-link" href="https://www.tiktok.com/@utmorelia?_r=1&_t=ZS-94h24oJcmpk">
+    <a class="nav-link" href="https://www.tiktok.com/@utmorelia">
         <i class="fab fa-tiktok"></i>
         <span>TikTok</span>
     </a>
@@ -128,7 +142,7 @@ Sesión
 </div>
 
 <li class="nav-item">
-    <a class="nav-link" href="../index">
+    <a class="nav-link" href="/index.html">
         <i class="fas fa-sign-out-alt"></i>
         <span>Salir</span>
     </a>

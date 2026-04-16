@@ -3,7 +3,7 @@ const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'intragames'
+    database: 'integragames'
 });
 connection.connect(err => {
     if (err) console.error('Error MySQL:', err);

@@ -7,8 +7,9 @@ const encabezado = require('./js/encabezado');
 const menuLateral = require('./js/menuLateral');
 const barraSuperior = require('./js/barraSuperior');
 
-
-// ================= MULTER =================
+/* =========================
+   MULTER (SUBIR IMAGEN)
+========================= */
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, './img/responsables/');
@@ -20,9 +21,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
-// ================= VER PERFIL =================
-router.get('/perfil', async (req, res) => {
+/* =========================
+   VER PERFIL
+========================= */
+router.get('/', async (req, res) => {
 
     if (!req.session.usuario) {
         return res.redirect('/RegistroAdmin/login.html');
@@ -35,7 +37,10 @@ router.get('/perfil', async (req, res) => {
 
     connection.query(sql, [usuarioActual], async (err, result) => {
 
-        if (err) throw err;
+        if (err) {
+            console.error(err);
+            return res.send("Error en servidor");
+        }
 
         if (result.length === 0) {
             return res.send("Usuario no encontrado");
@@ -64,23 +69,26 @@ router.get('/perfil', async (req, res) => {
 
 });
 
-
-// ================= ACTUALIZAR PERFIL =================
-router.post('/perfil/actualizar', upload.single('imagen'), (req, res) => {
+/* =========================
+   ACTUALIZAR PERFIL
+========================= */
+router.post('/actualizar', upload.single('imagen'), (req, res) => {
 
     if (!req.session.usuario) {
         return res.redirect('/RegistroAdmin/login.html');
     }
 
     const usuarioActual = req.session.usuario;
-
     const { nombre, contrasena } = req.body;
 
     const sqlBuscar = "SELECT imagen FROM responsable WHERE nombre=?";
 
     connection.query(sqlBuscar, [usuarioActual], (err, result) => {
 
-        if (err) throw err;
+        if (err) {
+            console.error(err);
+            return res.send("Error al buscar usuario");
+        }
 
         let imagenNombre = result[0].imagen;
 
@@ -90,10 +98,10 @@ router.post('/perfil/actualizar', upload.single('imagen'), (req, res) => {
 
         const sqlUpdate = `
             UPDATE responsable
-            SET nombre=?,
-                contraseña=?,
-                imagen=?
-            WHERE nombre=?
+            SET nombre = ?,
+                contraseña = ?,
+                imagen = ?
+            WHERE nombre = ?
         `;
 
         connection.query(
@@ -101,8 +109,12 @@ router.post('/perfil/actualizar', upload.single('imagen'), (req, res) => {
             [nombre, contrasena, imagenNombre, usuarioActual],
             (err2) => {
 
-                if (err2) throw err2;
+                if (err2) {
+                    console.error(err2);
+                    return res.send("Error al actualizar");
+                }
 
+                // actualizar sesión
                 req.session.usuario = nombre;
 
                 res.redirect('/perfil');
