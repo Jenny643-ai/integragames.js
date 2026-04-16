@@ -4,6 +4,7 @@ const connection = mysql.createConnection({
     user: 'root',
     password: '',
     database: 'integragames'
+
 });
 connection.connect(err => {
     if (err) console.error('Error MySQL:', err);
