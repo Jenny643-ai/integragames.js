@@ -94,6 +94,62 @@ function verificarSesion(req, res, next) {
     }
     next();
 }
+/* =========================
+   ENCUESTA (MOSTRAR Y GUARDAR)
+========================= */
+
+// 1. Agregar el GET para mostrar la encuesta
+const encuestaRouter = require('./juegos/encuesta'); // Asegúrate de que la ruta al archivo sea correcta
+app.use('/juegos/encuesta', verificarSesion, encuestaRouter);
+
+// El POST que ya tenías puedes dejarlo aquí o dentro del router anterior
+// Si lo dejas aquí, asegúrate de que el action del formulario sea "/guardar_encuesta"
+app.post('/guardar_encuesta', verificarSesion, (req, res) => {
+    const usuario = req.session.usuario;
+    const { calificacion, comentario, id_juego } = req.body;
+
+    // 1. Buscar al participante
+    const sqlUser = "SELECT id_participante FROM participante WHERE nombre = ?";
+    connection.query(sqlUser, [usuario], (err, resultUser) => {
+        if (err) {
+            console.error("Error al buscar usuario:", err);
+            return res.status(500).send("Error interno al buscar usuario");
+        }
+
+        if (resultUser.length === 0) {
+            return res.send(`
+                <script>
+                    alert('Error: No se encontró tu registro de participante. Asegúrate de estar registrado.');
+                    window.location.href = '/menu';
+                </script>
+            `);
+        }
+
+        const id_participante = resultUser[0].id_participante;
+
+        // 2. Insertar la satisfacción
+        const sqlInsert = `
+            INSERT INTO satisfaccion 
+            (calificacion, comentario, id_participante, id_juego)
+            VALUES (?, ?, ?, ?)
+        `;
+
+        connection.query(sqlInsert, [calificacion, comentario, id_participante, id_juego], (errInsert) => {
+            if (errInsert) {
+                console.error("Error al insertar encuesta:", errInsert);
+                return res.status(500).send("Error al guardar la encuesta en la base de datos");
+            }
+
+            // 3. ¡IMPORTANTE! Responder siempre para que deje de cargar
+            res.send(`
+                <script>
+                    alert('¡Gracias por tu opinión!');
+                    window.location.href = '/menu';
+                </script>
+            `);
+        });
+    });
+});
 
 /* =========================
    MENÚ
