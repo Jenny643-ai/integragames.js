@@ -128,7 +128,7 @@ Sesión
 </div>
 
 <li class="nav-item">
-    <a class="nav-link" href="../index">
+    <a class="nav-link" href="/index.html">
         <i class="fas fa-sign-out-alt"></i>
         <span>Salir</span>
     </a>
