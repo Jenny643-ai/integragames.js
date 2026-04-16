@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 
     let tarjetasHTML = '';
 
-    // ================= EVENTOS PARA STAFF =================
+    //  EVENTOS PARA STAFF 
     if (rolesPermitidos.includes(rol.toLowerCase())) {
 
         const hoy = new Date().toISOString().split('T')[0];
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
 
     } else {
 
-        // ================= PARTICIPANTE =================
+        //  PARTICIPANTE 
         const juegosInfo = [
             {
                 nombre: "Tecnología de la información",
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
         });
     }
 
-    // ================= LISTA DE JUEGOS =================
+    //  LISTA DE JUEGOS 
     const juegos = [
         {
             nombre: "Error 404",
@@ -243,4 +243,4 @@ ${logoutModal()}
 
 });
 
-module.exports = router;
+module.exports = router;                    
