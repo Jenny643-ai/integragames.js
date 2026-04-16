@@ -1,44 +1,63 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const connection = require('../config/db');
+const connection = require("../config/db"); // Verifica que la ruta a tu conexión sea correcta
 
-router.post('/', (req, res) => {
+router.post("/", (req, res) => {
+  // 1. Verificar si hay sesión activa
+  if (!req.session.usuario) {
+    return res.redirect("../RegistroAdmin/login");
+  }
 
-    const usuario = req.session.usuario;
+  const nombreUsuario = req.session.usuario;
 
-    // Obtener id_participante
-    const sqlUser = `SELECT id_participante FROM participante WHERE nombre='${usuario}'`;
+  // 2. Obtener id_participante usando Consultas Preparadas (?) por seguridad
+  const sqlUser = "SELECT id_participante FROM participante WHERE nombre = ?";
 
-    connection.query(sqlUser, (err, resultUser) => {
-        if (err) throw err;
+  connection.query(sqlUser, [nombreUsuario], (err, resultUser) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error al buscar el participante");
+    }
 
-        const user = resultUser[0];
-        const id_participante = user.id_participante;
+    // Verificar si se encontró al usuario
+    if (resultUser.length === 0) {
+      return res.send(
+        "Error: No se encontró el ID del participante en la base de datos.",
+      );
+    }
 
-        // Datos
-        const { calificacion, comentario, id_juego } = req.body;
+    const id_participante = resultUser[0].id_participante;
 
-        // Insertar
-        const sql = `INSERT INTO satisfaccion 
-        (calificacion, comentario, id_participante, id_juego)
-        VALUES 
-        ('${calificacion}','${comentario}','${id_participante}','${id_juego}')`;
+    // 3. Obtener datos del formulario (req.body)
+    const { calificacion, comentario, id_juego } = req.body;
 
-        connection.query(sql, (err2) => {
-            if (err2) {
-                return res.send("Error: " + err2);
-            }
+    // 4. Insertar en la tabla 'satisfaccion'
+    // IMPORTANTE: Usamos ? para evitar que caracteres raros rompan la consulta
+    const sqlInsert = `
+            INSERT INTO satisfaccion 
+            (calificacion, comentario, id_participante, id_juego)
+            VALUES (?, ?, ?, ?)
+        `;
 
-            res.send(`
+    connection.query(
+      sqlInsert,
+      [calificacion, comentario, id_participante, id_juego],
+      (err2) => {
+        if (err2) {
+          console.error(err2);
+          return res.send("Error al guardar la encuesta: " + err2.message);
+        }
+
+        // 5. Respuesta de éxito
+        res.send(`
                 <script>
-                    alert('Gracias por tu opinión');
-                    window.location.href='../menu';
+                    alert('¡Gracias por tu opinión! Tu calificación ha sido registrada.');
+                    window.location.href = '../menu';
                 </script>
             `);
-        });
-
-    });
-
+      },
+    );
+  });
 });
 
 module.exports = router;
